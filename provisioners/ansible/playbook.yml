@@ -1,0 +1,39 @@
+#!/usr/bin/env ansible-playbook
+
+- name: Configure Webserver with Nginx
+  hosts: 'all'
+  become: true
+  tasks:
+
+    - name: install Nginx
+      apt:
+        name: nginx
+
+    - name: copy nginx vhost
+      copy:
+        src: files/nginx.conf 
+        dest: /etc/nginx/sites-available/default
+
+    - name: enable configuration
+      file:
+        dest: /etc/nginx/sites-enabled/default
+        src: /etc/nginx/sites-available/default
+        state: link
+
+    - name: copy index.html
+      template:
+        src: templates/index.html.j2
+        dest: /usr/share/nginx/html/index.html
+        mode: 0664
+      notify: restart nginx
+
+    - name: enable nginx
+      service:
+        name: nginx
+        enabled: true
+
+  handlers:
+  - name: restart nginx
+    service:
+      name: nginx
+      state: restarted
